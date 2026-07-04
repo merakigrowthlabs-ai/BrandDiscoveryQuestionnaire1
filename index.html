@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brand Discovery Questionnaire — Meraki Growth Labs</title>
+<style>
+  :root {
+    --blue: #1B3A6B;
+    --gold: #C9A84C;
+    --teal: #0E7C7B;
+    --light-blue: #EAF0FB;
+    --light-gold: #FDF6E3;
+    --bg: #F7F8FC;
+    --white: #ffffff;
+    --text: #2C2C2C;
+    --muted: #6B7280;
+    --border: #E2E6EF;
+    --radius: 12px;
+    --shadow: 0 2px 16px rgba(27,58,107,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+  /* Progress bar */
+  #progress-bar-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: #dde3f0; z-index: 100; }
+  #progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), var(--blue)); transition: width 0.4s; width: 0%; }
+
+  /* Header */
+  .site-header { background: var(--blue); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 99; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+  .site-header .logo { color: var(--white); font-size: 20px; font-weight: 700; letter-spacing: 0.02em; }
+  .site-header .logo span { color: var(--gold); }
+  .site-header .progress-label { color: #AABBDD; font-size: 13px; }
+
+  /* Hero */
+  .hero { background: linear-gradient(135deg, var(--blue) 60%, #0E4A8A); color: white; padding: 56px 32px 48px; text-align: center; }
+  .hero h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .hero h1 span { color: var(--gold); }
+  .hero p { font-size: 17px; color: #AABBDD; max-width: 560px; margin: 0 auto 28px; line-height: 1.7; }
+  .hero-meta { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+  .hero-meta div { font-size: 14px; color: #CCDDEE; }
+  .hero-meta strong { color: var(--gold); display: block; font-size: 20px; }
+
+  /* Section nav */
+  .section-nav { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  .section-nav::-webkit-scrollbar { display: none; }
+  .nav-btn { padding: 14px 18px; font-size: 13px; font-weight: 500; color: var(--muted); border: none; background: none; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.2s; }
+  .nav-btn.active, .nav-btn:hover { color: var(--blue); border-bottom-color: var(--gold); }
+
+  /* Main */
+  .main { max-width: 820px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* Section card */
+  .section-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 28px; overflow: hidden; display: none; }
+  .section-card.active { display: block; }
+  .section-head { background: var(--blue); padding: 24px 28px; display: flex; align-items: center; gap: 20px; }
+  .section-num { background: var(--gold); color: var(--blue); font-size: 22px; font-weight: 800; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .section-head-text h2 { color: white; font-size: 20px; font-weight: 700; margin-bottom: 2px; }
+  .section-head-text p { color: #AABBDD; font-size: 14px; }
+  .section-body { padding: 28px; }
+
+  /* Question */
+  .q-block { margin-bottom: 32px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .q-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .q-label { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: flex; gap: 10px; align-items: flex-start; }
+  .q-num { color: var(--gold); font-weight: 700; flex-shrink: 0; }
+  .q-hint { font-size: 13px; color: var(--muted); margin-bottom: 12px; padding-left: 28px; font-style: italic; }
+  .q-required { color: #E53E3E; margin-left: 2px; }
+
+  /* Inputs */
+  input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+    width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 15px; font-family: inherit; color: var(--text); background: var(--bg);
+    transition: border 0.2s, box-shadow 0.2s; resize: vertical;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(27,58,107,0.08);
+    background: var(--white);
+  }
+  textarea { min-height: 100px; }
+  textarea.tall { min-height: 130px; }
+
+  /* Options */
+  .options-grid { display: flex; flex-direction: column; gap: 8px; }
+  .option-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.15s; background: var(--bg); }
+  .option-item:hover { border-color: var(--blue); background: var(--light-blue); }
+  .option-item input[type="radio"], .option-item input[type="checkbox"] { margin-top: 2px; accent-color: var(--blue); width: 16px; height: 16px; flex-shrink: 0; }
+  .option-item label { cursor: pointer; font-size: 15px; line-height: 1.4; flex: 1; }
+  .option-item.selected { border-color: var(--blue); background: var(--light-blue); }
+
+  /* Multi-short */
+  .multi-short { display: flex; flex-direction: column; gap: 10px; }
+  .multi-short-row { display: flex; gap: 10px; align-items: center; }
+  .multi-short-row label { font-size: 13px; color: var(--muted); font-weight: 600; width: 90px; flex-shrink: 0; }
+  .multi-short-row input { flex: 1; }
+
+  /* Scale */
+  .scale-wrap { display: flex; gap: 8px; align-items: flex-end; margin-top: 4px; }
+  .scale-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .scale-item input[type="radio"] { width: 20px; height: 20px; accent-color: var(--blue); cursor: pointer; }
+  .scale-item label { font-size: 12px; color: var(--muted); cursor: pointer; text-align: center; line-height: 1.2; }
+  .scale-item:first-child label, .scale-item:last-child label { color: var(--blue); font-weight: 600; }
+
+  /* Nav buttons */
+  .nav-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; gap: 12px; }
+  .btn { padding: 13px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: #152E58; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(27,58,107,0.25); }
+  .btn-secondary { background: var(--white); color: var(--blue); border: 1.5px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--blue); background: var(--light-blue); }
+  .btn-gold { background: var(--gold); color: var(--blue); }
+  .btn-gold:hover { background: #B8943E; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .section-progress { font-size: 13px; color: var(--muted); }
+
+  /* Contact section */
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .contact-grid { grid-template-columns: 1fr; } .scale-item label { font-size: 10px; } }
+  .field-group label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* Thank you screen */
+  .thankyou { display: none; text-align: center; padding: 60px 32px; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .thankyou.active { display: block; }
+  .thankyou-icon { font-size: 64px; margin-bottom: 20px; }
+  .thankyou h2 { font-size: 32px; font-weight: 800; color: var(--blue); margin-bottom: 12px; }
+  .thankyou p { font-size: 16px; color: var(--muted); max-width: 460px; margin: 0 auto 28px; }
+  .thankyou-contact { background: var(--light-blue); border-radius: 10px; padding: 20px; display: inline-block; margin-bottom: 28px; }
+  .thankyou-contact p { color: var(--blue); font-weight: 600; margin: 0; }
+
+  /* Info callout */
+  .callout { background: var(--light-gold); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 24px; font-size: 14px; color: #5A4010; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .hero { padding: 40px 20px 36px; }
+    .section-body { padding: 20px 16px; }
+    .nav-actions { flex-wrap: wrap; }
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+
+<header class="site-header">
+  <div class="logo">Meraki <span>Growth Labs</span></div>
+  <div class="progress-label" id="progress-label">Section 1 of 7</div>
+</header>
+
+<div class="hero">
+  <h1>Brand Discovery <span>Questionnaire</span></h1>
+  <p>Help us understand your brand deeply — so we can build a strategy and pitch that's truly yours, not a template.</p>
+  <div class="hero-meta">
+    <div><strong>45</strong> questions</div>
+    <div><strong>7</strong> sections</div>
+    <div><strong>25–35</strong> minutes</div>
+  </div>
+</div>
+
+<nav class="section-nav" id="section-nav">
+  <button class="nav-btn active" onclick="goToSection(0)">01 · Brand Basics</button>
+  <button class="nav-btn" onclick="goToSection(1)">02 · Identity</button>
+  <button class="nav-btn" onclick="goToSection(2)">03 · Audience</button>
+  <button class="nav-btn" onclick="goToSection(3)">04 · Current Marketing</button>
+  <button class="nav-btn" onclick="goToSection(4)">05 · Goals</button>
+  <button class="nav-btn" onclick="goToSection(5)">06 · Budget</button>
+  <button class="nav-btn" onclick="goToSection(6)">07 · Expectations</button>
+</nav>
+
+<div class="main">
+
+<!-- ═══ SECTION 0: CONTACT ═══ -->
+<div class="section-card active" id="sec-0">
+  <div class="section-head">
+    <div class="section-num">0</div>
+    <div class="section-head-text">
+      <h2>Your Details</h2>
+      <p>Let's start with the basics so we know who we're talking to.</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="contact-grid">
+      <div class="field-group">
+        <label>Brand / Company Name <span class="q-required">*</span></label>
+        <input type="text" id="brand_name" placeholder="e.g. My Brand Name" required>
+      </div>
+      <div class="field-group">
+        <label>Your Name & Designation <span class="q-required">*</span></label>
+        <input type="text" id="contact_name" placeholder="e.g. Priya Sharma, Founder" required>
+      </div>
+      <div class="field-group">
+        <label>Email Address <span class="q-required">*</span></label>
+        <input type="email" id="contact_email" placeholder="you@example.com" required>
+      </div>
+      <div class="field-group">
+        <label>Phone / WhatsApp</label>
+        <input type="tel" id="contact_phone" placeholder="+91 98765 43210">
+      </div>
+      <div class="field-group">
+        <label>Website</label>
+        <input type="text" id="website" placeholder="www.yourbrand.com">
+      </div>
+      <div class="field-group">
+        <label>Social Media Handles</label>
+        <input type="text" id="social" placeholder="@yourbrand on Instagram, LinkedIn…">
+      </div>
+    </div>
+    <div class="nav-actions">
+      <span class="section-progress">Section 1 of 7</span>
+      <button class="btn btn-primary" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 1: BRAND BASICS ═══ -->
+<div class="section-card" id="sec-1">
+  <div class="section-head">
+    <div class="section-num">01</div>
+    <div class="section-head-text">
+      <h2>Brand Basics</h2>
+      <p>Help us understand who you are and what you've built so far.</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q1</span> What does your brand do? Describe it as if explaining to a friend who knows nothing about your industry. <span class="q-required">*</span></div>
+      <textarea class="tall" id="q1" placeholder="Tell us your story in plain language…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q2</span> How long have you been in business?</div>
+      <div class="options-grid" id="q2">
+        <label class="option-item"><input type="radio" name="q2" value="Less than 6 months"><label>Less than 6 months</label></label>
+        <label class="option-item"><input type="radio" name="q2" value="6 months – 1 year"><label>6 months – 1 year</label></label>
+        <label class="option-item"><input type="radio" name="q2" value="1–3 years"><label>1–3 years</label></label>
+        <label class="option-item"><input type="radio" name="q2" value="3–5 years"><label>3–5 years</label></label>
+        <label class="option-item"><input type="radio" name="q2" value="More than 5 years"><label>More than 5 years</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q3</span> Current annual revenue range?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q3" value="Pre-revenue"><label>Pre-revenue (not yet launched)</label></label>
+        <label class="option-item"><input type="radio" name="q3" value="Under ₹10L"><label>Under ₹10 Lakhs</label></label>
+        <label class="option-item"><input type="radio" name="q3" value="₹10–50L"><label>₹10 – 50 Lakhs</label></label>
+        <label class="option-item"><input type="radio" name="q3" value="₹50L–1Cr"><label>₹50L – 1 Crore</label></label>
+        <label class="option-item"><input type="radio" name="q3" value="₹1–5Cr"><label>₹1 – 5 Crore</label></label>
+        <label class="option-item"><input type="radio" name="q3" value="Above ₹5Cr"><label>Above ₹5 Crore</label></label>
+        <label class="option-item"><input type="radio" name="q3" value="Prefer not to say"><label>Prefer not to say</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q4</span> List your top 3–5 products or services.</div>
+      <div class="multi-short">
+        <div class="multi-short-row"><label>1.</label><input type="text" id="q4_1" placeholder="Product / service name"></div>
+        <div class="multi-short-row"><label>2.</label><input type="text" id="q4_2" placeholder=""></div>
+        <div class="multi-short-row"><label>3.</label><input type="text" id="q4_3" placeholder=""></div>
+        <div class="multi-short-row"><label>4.</label><input type="text" id="q4_4" placeholder="(optional)"></div>
+        <div class="multi-short-row"><label>5.</label><input type="text" id="q4_5" placeholder="(optional)"></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q5</span> What is the one thing your brand does better than anyone else? <span class="q-required">*</span></div>
+      <div class="q-hint">Your honest, gut-feel answer is more useful than a polished one.</div>
+      <textarea id="q5" placeholder="Be specific — 'we have the fastest delivery' or 'our packaging is what people remember'…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q6</span> How would your happiest customer describe you in one sentence?</div>
+      <input type="text" id="q6" placeholder="'They are the only _____ brand that _____ '">`
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q7</span> Your brand is more…</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q7" value="logical"><label>🧠 Logical — we sell on features, specs, and performance</label></label>
+        <label class="option-item"><input type="radio" name="q7" value="emotional"><label>❤️ Emotional — we sell on feeling, identity, and belonging</label></label>
+        <label class="option-item"><input type="radio" name="q7" value="relationship"><label>🤝 Relationship-first — trust and community are our biggest differentiators</label></label>
+        <label class="option-item"><input type="radio" name="q7" value="value"><label>💰 Value-driven — price and accessibility are our promise</label></label>
+        <label class="option-item"><input type="radio" name="q7" value="purpose"><label>🌱 Purpose-led — our mission and values are the brand</label></label>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="prevSection()">← Back</button>
+      <span class="section-progress">Section 2 of 7</span>
+      <button class="btn btn-primary" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 2: IDENTITY ═══ -->
+<div class="section-card" id="sec-2">
+  <div class="section-head">
+    <div class="section-num">02</div>
+    <div class="section-head-text">
+      <h2>Brand Identity & Positioning</h2>
+      <p>How do you want to be seen and remembered?</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q8</span> If your brand were a person, how would you describe their personality?</div>
+      <div class="q-hint">e.g. "Bold and playful", "Calm and authoritative", "Warm and quirky"</div>
+      <input type="text" id="q8" placeholder="Describe in a few words or a sentence…">
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q9</span> What tone of voice do you want for your brand?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q9" value="Professional & authoritative"><label>Professional & authoritative</label></label>
+        <label class="option-item"><input type="radio" name="q9" value="Friendly & conversational"><label>Friendly & conversational</label></label>
+        <label class="option-item"><input type="radio" name="q9" value="Aspirational & premium"><label>Aspirational & premium</label></label>
+        <label class="option-item"><input type="radio" name="q9" value="Witty & humorous"><label>Witty & humorous</label></label>
+        <label class="option-item"><input type="radio" name="q9" value="Bold & disruptive"><label>Bold & disruptive</label></label>
+        <label class="option-item"><input type="radio" name="q9" value="Warm & empathetic"><label>Warm & empathetic</label></label>
+        <label class="option-item"><input type="radio" name="q9" value="Other"><label>Other (describe below)</label></label>
+      </div>
+      <input type="text" id="q9_other" placeholder="Describe your own tone…" style="margin-top:10px;">
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q10</span> List 3 brands from any industry that you admire — and why.</div>
+      <div class="multi-short">
+        <div class="multi-short-row"><label>Brand 1</label><input type="text" id="q10_1" placeholder="Brand name + why you admire it"></div>
+        <div class="multi-short-row"><label>Brand 2</label><input type="text" id="q10_2" placeholder=""></div>
+        <div class="multi-short-row"><label>Brand 3</label><input type="text" id="q10_3" placeholder=""></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q11</span> List 3 brands whose style you do NOT want to be associated with — and why.</div>
+      <div class="multi-short">
+        <div class="multi-short-row"><label>Brand 1</label><input type="text" id="q11_1" placeholder="Brand name + why"></div>
+        <div class="multi-short-row"><label>Brand 2</label><input type="text" id="q11_2" placeholder=""></div>
+        <div class="multi-short-row"><label>Brand 3</label><input type="text" id="q11_3" placeholder=""></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q12</span> 5 words that describe your brand.</div>
+      <div class="multi-short">
+        <div class="multi-short-row"><label>Word 1</label><input type="text" id="q12_1"></div>
+        <div class="multi-short-row"><label>Word 2</label><input type="text" id="q12_2"></div>
+        <div class="multi-short-row"><label>Word 3</label><input type="text" id="q12_3"></div>
+        <div class="multi-short-row"><label>Word 4</label><input type="text" id="q12_4"></div>
+        <div class="multi-short-row"><label>Word 5</label><input type="text" id="q12_5"></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q13</span> 3 words you'd NEVER want associated with your brand.</div>
+      <div class="multi-short">
+        <div class="multi-short-row"><label>Word 1</label><input type="text" id="q13_1"></div>
+        <div class="multi-short-row"><label>Word 2</label><input type="text" id="q13_2"></div>
+        <div class="multi-short-row"><label>Word 3</label><input type="text" id="q13_3"></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q14</span> Do you have an existing brand identity?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q14" value="complete"><label>✅ Yes — complete and locked (will share brand guidelines)</label></label>
+        <label class="option-item"><input type="radio" name="q14" value="open"><label>🔄 Yes — but open to evolution</label></label>
+        <label class="option-item"><input type="radio" name="q14" value="partial"><label>⚠️ Partial — some elements exist but inconsistent</label></label>
+        <label class="option-item"><input type="radio" name="q14" value="fresh"><label>🆕 No — starting fresh</label></label>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="prevSection()">← Back</button>
+      <span class="section-progress">Section 3 of 7</span>
+      <button class="btn btn-primary" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 3: AUDIENCE ═══ -->
+<div class="section-card" id="sec-3">
+  <div class="section-head">
+    <div class="section-num">03</div>
+    <div class="section-head-text">
+      <h2>Your Audience & Market</h2>
+      <p>Tell us about the people you serve and the world you compete in.</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q15</span> Who is your primary customer? Describe them in detail. <span class="q-required">*</span></div>
+      <div class="q-hint">Think: age, gender, city/tier, income, lifestyle, what keeps them up at night, what they aspire to.</div>
+      <textarea class="tall" id="q15" placeholder="e.g. 'Working women aged 28–40 in Tier-1 cities, earning ₹8–25L/year, who value convenience and aesthetics but feel guilty spending on themselves…'"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q16</span> Do you serve B2C, B2B, or both?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q16" value="B2C"><label>Primarily B2C (direct to individual consumers)</label></label>
+        <label class="option-item"><input type="radio" name="q16" value="B2B"><label>Primarily B2B (businesses as clients)</label></label>
+        <label class="option-item"><input type="radio" name="q16" value="Both"><label>Both equally</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q17</span> Where are your customers primarily located?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q17" value="local"><label>Bhopal / local city only</label></label>
+        <label class="option-item"><input type="radio" name="q17" value="mp"><label>Madhya Pradesh — multiple cities</label></label>
+        <label class="option-item"><input type="radio" name="q17" value="pan-india"><label>Pan-India (online / offline)</label></label>
+        <label class="option-item"><input type="radio" name="q17" value="international"><label>International / exports</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q18</span> Name your top 3 competitors.</div>
+      <div class="multi-short">
+        <div class="multi-short-row"><label>Competitor 1</label><input type="text" id="q18_1" placeholder="Name (and website if known)"></div>
+        <div class="multi-short-row"><label>Competitor 2</label><input type="text" id="q18_2" placeholder=""></div>
+        <div class="multi-short-row"><label>Competitor 3</label><input type="text" id="q18_3" placeholder=""></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q19</span> Why do customers choose YOU over competitors?</div>
+      <textarea id="q19" placeholder="Be specific — is it price, quality, trust, speed, uniqueness, relationships?"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q20</span> Why do customers sometimes choose a competitor over you?</div>
+      <div class="q-hint">Be honest — this helps us most.</div>
+      <textarea id="q20" placeholder="e.g. 'Our prices are higher', 'They have better online presence', 'We're not well-known yet'…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q21</span> Is your industry growing, stable, or declining? What key trends are affecting it?</div>
+      <textarea id="q21" placeholder="Share what you're seeing in the market…"></textarea>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="prevSection()">← Back</button>
+      <span class="section-progress">Section 4 of 7</span>
+      <button class="btn btn-primary" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 4: CURRENT MARKETING ═══ -->
+<div class="section-card" id="sec-4">
+  <div class="section-head">
+    <div class="section-num">04</div>
+    <div class="section-head-text">
+      <h2>Current Marketing</h2>
+      <p>Let's understand what you've tried so far and what's working.</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q22</span> Which marketing channels are you currently active on? (Select all that apply)</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="checkbox" name="q22" value="Instagram"><label>Instagram</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="Facebook"><label>Facebook</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="LinkedIn"><label>LinkedIn</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="YouTube"><label>YouTube</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="WhatsApp"><label>WhatsApp (broadcast / community)</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="Google Ads"><label>Google Ads</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="Meta Ads"><label>Meta Ads (Facebook / Instagram paid)</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="SEO / Blog"><label>SEO / Blog</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="Email Marketing"><label>Email Marketing</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="Print / Outdoor"><label>Print / Outdoor / Hoardings</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="Word of mouth"><label>Word of mouth / referrals only</label></label>
+        <label class="option-item"><input type="checkbox" name="q22" value="None yet"><label>None yet</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q23</span> Which channel brings you the most customers today?</div>
+      <input type="text" id="q23" placeholder="e.g. Instagram DMs, walk-ins, word of mouth, Swiggy…">
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q24</span> Which channel have you tried that has NOT worked well?</div>
+      <textarea id="q24" placeholder="Tell us what you tried and why it didn't deliver — budget spent, results expected vs. actual…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q25</span> How would you rate your current digital marketing efforts overall?</div>
+      <div class="scale-wrap">
+        <div class="scale-item"><input type="radio" name="q25" value="1" id="s1"><label for="s1">1<br>Very poor</label></div>
+        <div class="scale-item"><input type="radio" name="q25" value="2" id="s2"><label for="s2">2</label></div>
+        <div class="scale-item"><input type="radio" name="q25" value="3" id="s3"><label for="s3">3</label></div>
+        <div class="scale-item"><input type="radio" name="q25" value="4" id="s4"><label for="s4">4</label></div>
+        <div class="scale-item"><input type="radio" name="q25" value="5" id="s5"><label for="s5">5</label></div>
+        <div class="scale-item"><input type="radio" name="q25" value="6" id="s6"><label for="s6">6</label></div>
+        <div class="scale-item"><input type="radio" name="q25" value="7" id="s7"><label for="s7">7<br>Excellent</label></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q26</span> Do you currently have anyone managing your marketing?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q26" value="full-time in-house"><label>Yes — full-time in-house team</label></label>
+        <label class="option-item"><input type="radio" name="q26" value="part-time in-house"><label>Yes — part-time in-house person</label></label>
+        <label class="option-item"><input type="radio" name="q26" value="freelancer"><label>Yes — freelancer(s)</label></label>
+        <label class="option-item"><input type="radio" name="q26" value="self"><label>No — I'm doing it myself</label></label>
+        <label class="option-item"><input type="radio" name="q26" value="nothing"><label>No — nothing is being done currently</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q27</span> What does your current content creation process look like?</div>
+      <div class="q-hint">Who makes the posts, videos, copy? How often? Any tools you use?</div>
+      <textarea id="q27" placeholder="e.g. 'I take photos myself and post when I have time. No fixed schedule.'"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q28</span> Share your best-performing post or campaign ever (link or description) — and why you think it worked.</div>
+      <textarea id="q28" placeholder="Paste a link, or describe the post and its results…"></textarea>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="prevSection()">← Back</button>
+      <span class="section-progress">Section 5 of 7</span>
+      <button class="btn btn-primary" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 5: GOALS ═══ -->
+<div class="section-card" id="sec-5">
+  <div class="section-head">
+    <div class="section-num">05</div>
+    <div class="section-head-text">
+      <h2>Goals & Ambitions</h2>
+      <p>Where do you want to go? Dream big — we're here to help build the path.</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q29</span> What is the single most important business goal for the next 12 months? <span class="q-required">*</span></div>
+      <div class="q-hint">e.g. "Double monthly revenue", "Launch in 3 new cities", "Build 10,000-person community", "Go from offline to online"</div>
+      <textarea id="q29" placeholder="Be specific — a number, a city, a milestone…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q30</span> What does success look like 3 years from now?</div>
+      <textarea id="q30" placeholder="Paint the picture — revenue, team size, geography, brand reputation…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q31</span> Top 3 marketing outcomes you're hoping to achieve by working with us.</div>
+      <div class="multi-short">
+        <div class="multi-short-row"><label>Outcome 1</label><input type="text" id="q31_1" placeholder="e.g. 3x Instagram followers in 6 months"></div>
+        <div class="multi-short-row"><label>Outcome 2</label><input type="text" id="q31_2" placeholder=""></div>
+        <div class="multi-short-row"><label>Outcome 3</label><input type="text" id="q31_3" placeholder=""></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q32</span> What is your BIGGEST priority right now? <span class="q-required">*</span></div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q32" value="awareness"><label>🚀 Brand awareness — more people should know we exist</label></label>
+        <label class="option-item"><input type="radio" name="q32" value="leads"><label>🎯 Lead generation — we need more enquiries / potential customers</label></label>
+        <label class="option-item"><input type="radio" name="q32" value="conversion"><label>💰 Sales conversion — we have traffic/leads but they're not converting</label></label>
+        <label class="option-item"><input type="radio" name="q32" value="retention"><label>🔁 Customer retention — keep existing customers longer</label></label>
+        <label class="option-item"><input type="radio" name="q32" value="online presence"><label>🌐 Online presence — build from scratch</label></label>
+        <label class="option-item"><input type="radio" name="q32" value="marketplace"><label>📦 Marketplace growth — Amazon / Flipkart / Meesho</label></label>
+        <label class="option-item"><input type="radio" name="q32" value="partnerships"><label>🤝 Brand partnerships and collaborations</label></label>
+        <label class="option-item"><input type="radio" name="q32" value="thought leadership"><label>📣 Reputation & thought leadership</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q33</span> What would make this engagement a 10/10 success at the end of 6 months?</div>
+      <textarea id="q33" placeholder="Describe what 'wow, they really delivered' looks like to you…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q34</span> Any upcoming milestones, launches, or seasons we should plan around?</div>
+      <div class="q-hint">e.g. festive season, product launch, company anniversary, new store opening</div>
+      <textarea id="q34" placeholder="List dates and events coming up in the next 6–12 months…"></textarea>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="prevSection()">← Back</button>
+      <span class="section-progress">Section 6 of 7</span>
+      <button class="btn btn-primary" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 6: BUDGET ═══ -->
+<div class="section-card" id="sec-6">
+  <div class="section-head">
+    <div class="section-num">06</div>
+    <div class="section-head-text">
+      <h2>Budget & Operations</h2>
+      <p>Practical details to help us recommend the right scope.</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="callout">💡 All budget information is kept strictly confidential and is only used to recommend the right service package for your needs.</div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q35</span> Monthly marketing budget (across all activities)?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q35" value="Under ₹15K"><label>Under ₹15,000/month</label></label>
+        <label class="option-item"><input type="radio" name="q35" value="₹15–30K"><label>₹15,000 – 30,000/month</label></label>
+        <label class="option-item"><input type="radio" name="q35" value="₹30–60K"><label>₹30,000 – 60,000/month</label></label>
+        <label class="option-item"><input type="radio" name="q35" value="₹60K–1L"><label>₹60,000 – 1,00,000/month</label></label>
+        <label class="option-item"><input type="radio" name="q35" value="₹1–2L"><label>₹1 Lakh – 2 Lakhs/month</label></label>
+        <label class="option-item"><input type="radio" name="q35" value="Above ₹2L"><label>Above ₹2 Lakhs/month</label></label>
+        <label class="option-item"><input type="radio" name="q35" value="flexible"><label>Flexible — depends on the right plan</label></label>
+        <label class="option-item"><input type="radio" name="q35" value="not sure"><label>Not sure yet</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q36</span> Paid advertising (Meta Ads, Google Ads) budget per month?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q36" value="none"><label>₹0 — not running paid ads yet</label></label>
+        <label class="option-item"><input type="radio" name="q36" value="Under ₹10K"><label>Under ₹10,000</label></label>
+        <label class="option-item"><input type="radio" name="q36" value="₹10–25K"><label>₹10,000 – 25,000</label></label>
+        <label class="option-item"><input type="radio" name="q36" value="₹25–50K"><label>₹25,000 – 50,000</label></label>
+        <label class="option-item"><input type="radio" name="q36" value="₹50K–1L"><label>₹50,000 – 1,00,000</label></label>
+        <label class="option-item"><input type="radio" name="q36" value="Above ₹1L"><label>Above ₹1 Lakh</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q37</span> How quickly are you hoping to start?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q37" value="immediately"><label>Immediately (within 2 weeks)</label></label>
+        <label class="option-item"><input type="radio" name="q37" value="next month"><label>In the next month</label></label>
+        <label class="option-item"><input type="radio" name="q37" value="1-3 months"><label>In 1–3 months</label></label>
+        <label class="option-item"><input type="radio" name="q37" value="evaluating"><label>Still evaluating / no fixed timeline</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q38</span> Primary point of contact on your team.</div>
+      <div class="multi-short">
+        <div class="multi-short-row"><label>Name & Role</label><input type="text" id="q38_1" placeholder="e.g. Riya Shah, Marketing Manager"></div>
+        <div class="multi-short-row"><label>Email</label><input type="text" id="q38_2" placeholder=""></div>
+        <div class="multi-short-row"><label>Phone</label><input type="text" id="q38_3" placeholder=""></div>
+        <div class="multi-short-row"><label>Preferred channel</label><input type="text" id="q38_4" placeholder="WhatsApp / Email / Calls"></div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q39</span> How involved do you want to be in day-to-day marketing decisions?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q39" value="very involved"><label>Very involved — I want to approve everything before it goes out</label></label>
+        <label class="option-item"><input type="radio" name="q39" value="moderate"><label>Moderately involved — weekly check-ins are enough</label></label>
+        <label class="option-item"><input type="radio" name="q39" value="hands-off"><label>Hands-off — I trust the agency to execute; flag only big decisions</label></label>
+        <label class="option-item"><input type="radio" name="q39" value="depends"><label>Somewhere in between — depends on the activity</label></label>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="prevSection()">← Back</button>
+      <span class="section-progress">Section 7 of 7</span>
+      <button class="btn btn-primary" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 7: EXPECTATIONS ═══ -->
+<div class="section-card" id="sec-7">
+  <div class="section-head">
+    <div class="section-num">07</div>
+    <div class="section-head-text">
+      <h2>Agency Expectations</h2>
+      <p>Help us be the best partner we can be.</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q40</span> Have you worked with a marketing agency before?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q40" value="yes-great"><label>Yes — great experience</label></label>
+        <label class="option-item"><input type="radio" name="q40" value="yes-mixed"><label>Yes — mixed experience</label></label>
+        <label class="option-item"><input type="radio" name="q40" value="yes-poor"><label>Yes — poor experience</label></label>
+        <label class="option-item"><input type="radio" name="q40" value="no"><label>No — this is our first time</label></label>
+      </div>
+      <input type="text" id="q40_detail" placeholder="If yes and it didn't go well — what went wrong? (helps us avoid the same mistakes)" style="margin-top:10px;">
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q41</span> What's your biggest fear or concern about hiring a marketing agency?</div>
+      <div class="q-hint">Be honest — it helps us address it upfront.</div>
+      <textarea id="q41" placeholder="e.g. 'Spending money without seeing results', 'Losing control of the brand voice', 'Not understanding what we're paying for'…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q42</span> How do you prefer to receive performance reports and updates?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q42" value="weekly report"><label>Weekly detailed report (email / doc)</label></label>
+        <label class="option-item"><input type="radio" name="q42" value="bi-weekly"><label>Bi-weekly report + call</label></label>
+        <label class="option-item"><input type="radio" name="q42" value="monthly"><label>Monthly report + in-person / video review meeting</label></label>
+        <label class="option-item"><input type="radio" name="q42" value="dashboard"><label>Live dashboard I can check anytime</label></label>
+        <label class="option-item"><input type="radio" name="q42" value="results only"><label>I don't need reports — just show me results</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q43</span> Which metric matters most to you?</div>
+      <div class="options-grid">
+        <label class="option-item"><input type="radio" name="q43" value="reach"><label>Followers / Reach / Impressions (brand visibility)</label></label>
+        <label class="option-item"><input type="radio" name="q43" value="traffic"><label>Website traffic</label></label>
+        <label class="option-item"><input type="radio" name="q43" value="leads"><label>Leads / Enquiries generated</label></label>
+        <label class="option-item"><input type="radio" name="q43" value="revenue"><label>Sales / Revenue directly attributed to marketing</label></label>
+        <label class="option-item"><input type="radio" name="q43" value="retention"><label>Customer retention / repeat purchases</label></label>
+        <label class="option-item"><input type="radio" name="q43" value="roas"><label>Cost per lead / ROAS (return on ad spend)</label></label>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q44</span> Is there anything about your brand, industry, or situation that you think we absolutely MUST know before pitching to you?</div>
+      <textarea class="tall" id="q44" placeholder="Any sensitivities, past context, unique constraints, competitive concerns, upcoming news…"></textarea>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-num">Q45</span> Anything else you'd like to share — about the brand, your dreams, your worries, or anything at all?</div>
+      <textarea class="tall" id="q45" placeholder="This is a free space. Tell us whatever feels important."></textarea>
+    </div>
+
+    <div id="submit-error" style="display:none; background:#FEE2E2; border-left:4px solid #DC2626; border-radius:0 8px 8px 0; padding:12px 16px; margin-bottom:16px; font-size:14px; color:#7F1D1D;"></div>
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="prevSection()">← Back</button>
+      <span></span>
+      <button class="btn btn-gold" onclick="submitForm()">✓ Submit Questionnaire</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ THANK YOU ═══ -->
+<div class="thankyou" id="thankyou">
+  <div class="thankyou-icon">🎉</div>
+  <h2>Thank you!</h2>
+  <p>We've received your responses and will read every word carefully. Expect to hear from us within <strong>48 hours</strong> with next steps.</p>
+  <div class="thankyou-contact">
+    <p>📧 merakigrowthlabs@gmail.com &nbsp;|&nbsp; 📱 +91 96197 27797</p>
+  </div>
+  <p style="font-size:14px; color: var(--muted);">Meraki Growth Labs &nbsp;·&nbsp; Bhopal, Madhya Pradesh</p>
+</div>
+
+</div><!-- /main -->
+
+<script>
+  let currentSection = 0;
+  const totalSections = 8; // 0 (contact) + 7 sections
+
+  function updateProgress() {
+    const pct = (currentSection / (totalSections - 1)) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `Section ${currentSection + 1} of ${totalSections}`;
+    // Update nav buttons
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i === currentSection - 1);
+    });
+  }
+
+  function goToSection(idx) {
+    // idx is 0-based for sections 1–7
+    currentSection = idx + 1;
+    showSection(currentSection);
+  }
+
+  function showSection(n) {
+    document.querySelectorAll('.section-card').forEach((c, i) => {
+      c.classList.toggle('active', i === n);
+    });
+    document.getElementById('thankyou').classList.remove('active');
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function nextSection() {
+    if (currentSection < totalSections - 1) {
+      currentSection++;
+      showSection(currentSection);
+    }
+  }
+
+  function prevSection() {
+    if (currentSection > 0) {
+      currentSection--;
+      showSection(currentSection);
+    }
+  }
+
+  async function submitForm() {
+    const submitBtn = document.querySelector('.btn-gold');
+    const errorBanner = document.getElementById('submit-error');
+
+    // Collect all field values with readable labels for Formspree inbox
+    const data = {};
+
+    const textFields = {
+      'brand_name':'Brand Name','contact_name':'Contact Name & Role',
+      'contact_email':'Email','contact_phone':'Phone',
+      'website':'Website','social':'Social Media Handles',
+      'q1':'Q1 – What does your brand do?',
+      'q4_1':'Q4 – Product 1','q4_2':'Q4 – Product 2','q4_3':'Q4 – Product 3',
+      'q4_4':'Q4 – Product 4','q4_5':'Q4 – Product 5',
+      'q5':'Q5 – One thing you do better than anyone',
+      'q6':'Q6 – How your happiest customer describes you',
+      'q8':'Q8 – Brand personality',
+      'q9_other':'Q9 – Tone of voice (other)',
+      'q10_1':'Q10 – Admired brand 1','q10_2':'Q10 – Admired brand 2','q10_3':'Q10 – Admired brand 3',
+      'q11_1':'Q11 – Brand style to avoid 1','q11_2':'Q11 – Brand style to avoid 2','q11_3':'Q11 – Brand style to avoid 3',
+      'q12_1':'Q12 – Brand word 1','q12_2':'Q12 – Brand word 2','q12_3':'Q12 – Brand word 3',
+      'q12_4':'Q12 – Brand word 4','q12_5':'Q12 – Brand word 5',
+      'q13_1':'Q13 – Word to avoid 1','q13_2':'Q13 – Word to avoid 2','q13_3':'Q13 – Word to avoid 3',
+      'q15':'Q15 – Primary customer description',
+      'q18_1':'Q18 – Competitor 1','q18_2':'Q18 – Competitor 2','q18_3':'Q18 – Competitor 3',
+      'q19':'Q19 – Why customers choose you',
+      'q20':'Q20 – Why customers choose competitors',
+      'q21':'Q21 – Industry trends',
+      'q23':'Q23 – Best channel today',
+      'q24':'Q24 – Channel that did NOT work',
+      'q27':'Q27 – Content creation process',
+      'q28':'Q28 – Best performing post or campaign',
+      'q29':'Q29 – Most important goal next 12 months',
+      'q30':'Q30 – Success in 3 years',
+      'q31_1':'Q31 – Marketing outcome 1','q31_2':'Q31 – Marketing outcome 2','q31_3':'Q31 – Marketing outcome 3',
+      'q33':'Q33 – What 10/10 success looks like',
+      'q34':'Q34 – Upcoming milestones or launches',
+      'q38_1':'Q38 – POC Name & Role','q38_2':'Q38 – POC Email',
+      'q38_3':'Q38 – POC Phone','q38_4':'Q38 – Preferred communication channel',
+      'q40_detail':'Q40 – What went wrong with previous agency',
+      'q41':'Q41 – Biggest fear about hiring an agency',
+      'q44':'Q44 – Must-know information',
+      'q45':'Q45 – Anything else',
+    };
+
+    Object.entries(textFields).forEach(([id, label]) => {
+      const el = document.getElementById(id);
+      if (el && el.value.trim()) data[label] = el.value.trim();
+    });
+
+    const radioLabels = {
+      'q2':'Q2 – Years in business','q3':'Q3 – Annual revenue range',
+      'q7':'Q7 – Brand character type','q9':'Q9 – Tone of voice',
+      'q14':'Q14 – Existing brand identity','q16':'Q16 – B2C or B2B',
+      'q17':'Q17 – Customer location','q25':'Q25 – Current marketing rating (1-7)',
+      'q26':'Q26 – Who manages marketing','q32':'Q32 – Biggest priority',
+      'q35':'Q35 – Monthly marketing budget','q36':'Q36 – Paid ads budget',
+      'q37':'Q37 – Timeline to start','q39':'Q39 – Involvement level',
+      'q40':'Q40 – Previous agency experience','q42':'Q42 – Reporting preference',
+      'q43':'Q43 – Most important metric',
+    };
+    document.querySelectorAll('input[type="radio"]:checked').forEach(r => {
+      data[radioLabels[r.name] || r.name] = r.value;
+    });
+
+    const channels = [];
+    document.querySelectorAll('input[name="q22"]:checked').forEach(c => channels.push(c.value));
+    if (channels.length) data['Q22 – Active marketing channels'] = channels.join(', ');
+
+    // Guard required fields
+    if (!data['Brand Name'] || !data['Email']) {
+      errorBanner.textContent = 'Please fill in at least your Brand Name and Email before submitting.';
+      errorBanner.style.display = 'block';
+      currentSection = 0; showSection(0);
+      return;
+    }
+    errorBanner.style.display = 'none';
+
+    // Disable button during submission
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Sending…';
+
+    try {
+      const res = await fetch('https://formspree.io/f/xwvdwzjq', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          _subject: 'New Brand Discovery – ' + (data['Brand Name'] || 'Unknown'),
+        }),
+      });
+
+      if (res.ok) {
+        document.querySelectorAll('.section-card').forEach(c => c.classList.remove('active'));
+        document.getElementById('thankyou').classList.add('active');
+        document.getElementById('progress-bar').style.width = '100%';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const json = await res.json().catch(() => ({}));
+        const msg = (json.errors || []).map(e => e.message).join(', ') || 'Submission failed. Please try again.';
+        errorBanner.textContent = '⚠️ ' + msg;
+        errorBanner.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✓ Submit Questionnaire';
+      }
+    } catch (err) {
+      errorBanner.textContent = '⚠️ Network error — please check your connection and try again.';
+      errorBanner.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = '✓ Submit Questionnaire';
+    }
+  }
+
+  // Highlight selected options visually
+  document.addEventListener('change', function(e) {
+    if (e.target.type === 'radio') {
+      const group = e.target.name;
+      document.querySelectorAll(`input[name="${group}"]`).forEach(r => {
+        r.closest('.option-item').classList.toggle('selected', r.checked);
+      });
+    }
+    if (e.target.type === 'checkbox') {
+      e.target.closest('.option-item').classList.toggle('selected', e.target.checked);
+    }
+  });
+
+  updateProgress();
+</script>
+</body>
+</html>
